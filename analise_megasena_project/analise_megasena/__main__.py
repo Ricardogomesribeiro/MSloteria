@@ -234,29 +234,177 @@ def exibirTabelaTkinter(digitos_mega):
         print(f"Erro ao abrir o arquivo: {e}")
         dados = {}
 
-    linhas = []
+    rows = []
     for chave, valores in dados.items():
-        linhas.append([
-            chave,
-            valores.get('vezes', 0),
-            valores.get('a.atual', 0),
-            valores.get('a.medio', 0),
-            valores.get('a.max', 0),
-        ])
+        rows.append({
+            'Dígito': chave,
+            'Vezes': valores.get('vezes', 0),
+            'A. Atual': valores.get('a.atual', 0),
+            'A. Médio': valores.get('a.medio', 0),
+            'A. Máx': valores.get('a.max', 0),
+        })
 
     janela = tk.Tk()
     janela.title("Dados da Mega")
-    janela.geometry("900x600")
+    janela.geometry("960x620")
 
     cabecalho = ['Dígito', 'Vezes', 'A. Atual', 'A. Médio', 'A. Máx']
     tabela = ttk.Treeview(janela, columns=cabecalho, show="headings", height=25)
 
+    filters = {col: {'min': None, 'max': None} for col in cabecalho}
+
+    def parse_value(col, value):
+        if col == 'Dígito':
+            try:
+                return int(str(value).lstrip('dD'))
+            except Exception:
+                return None
+        try:
+            return float(value)
+        except Exception:
+            return None
+
+    def get_display_rows():
+        filtered = []
+        for row in rows:
+            keep = True
+            for col, filt in filters.items():
+                if filt['min'] is None and filt['max'] is None:
+                    continue
+                value = parse_value(col, row[col])
+                if value is None:
+                    keep = False
+                    break
+                if filt['min'] is not None and value < filt['min']:
+                    keep = False
+                    break
+                if filt['max'] is not None and value > filt['max']:
+                    keep = False
+                    break
+            if keep:
+                filtered.append(row)
+        return filtered
+
+    def atualizar_filtros_label():
+        partes = []
+        for col, filt in filters.items():
+            if filt['min'] is not None or filt['max'] is not None:
+                min_text = str(filt['min']) if filt['min'] is not None else '-inf'
+                max_text = str(filt['max']) if filt['max'] is not None else 'inf'
+                partes.append(f"{col}: {min_text} ≤ x ≤ {max_text}")
+        texto = "Filtros ativos: " + (" | ".join(partes) if partes else "Nenhum")
+        filtros_label.config(text=texto)
+
+    sort_column = None
+    sort_ascending = True
+
+    def sort_rows(display_rows):
+        nonlocal sort_column, sort_ascending
+        if sort_column is None:
+            return display_rows
+        try:
+            return sorted(
+                display_rows,
+                key=lambda row: parse_value(sort_column, row[sort_column]),
+                reverse=not sort_ascending,
+            )
+        except Exception:
+            return display_rows
+
+    def atualizar_tabela():
+        tabela.delete(*tabela.get_children())
+        for row in sort_rows(get_display_rows()):
+            tabela.insert("", "end", values=[row[col] for col in cabecalho])
+        atualizar_filtros_label()
+
+    def on_heading_click(col):
+        nonlocal sort_column, sort_ascending
+        if sort_column == col:
+            sort_ascending = not sort_ascending
+        else:
+            sort_column = col
+            sort_ascending = True
+        atualizar_tabela()
+
+    def show_filter_dialog(col):
+        dialog = tk.Toplevel(janela)
+        dialog.title(f"Filtrar coluna: {col}")
+        dialog.geometry("320x180")
+        dialog.resizable(False, False)
+
+        current = filters[col]
+        values = [parse_value(col, row[col]) for row in rows if parse_value(col, row[col]) is not None]
+        if not values:
+            values = [0]
+        min_value = min(values)
+        max_value = max(values)
+
+        tk.Label(dialog, text=f"Intervalo possível: {min_value} a {max_value}").pack(padx=12, pady=(12, 4), anchor="w")
+        tk.Label(dialog, text="Valor mínimo:").pack(padx=12, pady=(4, 0), anchor="w")
+        min_entry = tk.Entry(dialog)
+        min_entry.pack(fill="x", padx=12)
+        if current['min'] is not None:
+            min_entry.insert(0, str(current['min']))
+
+        tk.Label(dialog, text="Valor máximo:").pack(padx=12, pady=(8, 0), anchor="w")
+        max_entry = tk.Entry(dialog)
+        max_entry.pack(fill="x", padx=12)
+        if current['max'] is not None:
+            max_entry.insert(0, str(current['max']))
+
+        def aplicar():
+            min_text = min_entry.get().strip()
+            max_text = max_entry.get().strip()
+            try:
+                min_val = float(min_text) if min_text != "" else None
+                max_val = float(max_text) if max_text != "" else None
+                if col == 'Dígito':
+                    min_val = int(min_val) if min_val is not None else None
+                    max_val = int(max_val) if max_val is not None else None
+                if min_val is not None and max_val is not None and min_val > max_val:
+                    tk.messagebox.showerror("Erro", "Valor mínimo não pode ser maior que máximo.")
+                    return
+                filters[col]['min'] = min_val
+                filters[col]['max'] = max_val
+                atualizar_tabela()
+                dialog.destroy()
+            except ValueError:
+                tk.messagebox.showerror("Erro", "Digite números válidos para os limites.")
+
+        def limpar():
+            filters[col]['min'] = None
+            filters[col]['max'] = None
+            atualizar_tabela()
+            dialog.destroy()
+
+        botoes = tk.Frame(dialog)
+        tk.Button(botoes, text="Aplicar", width=10, command=aplicar).pack(side="left", padx=6, pady=12)
+        tk.Button(botoes, text="Limpar", width=10, command=limpar).pack(side="left", padx=6, pady=12)
+        tk.Button(botoes, text="Cancelar", width=10, command=dialog.destroy).pack(side="left", padx=6, pady=12)
+        botoes.pack()
+
+    def on_heading_right_click(event):
+        region = tabela.identify_region(event.x, event.y)
+        if region != 'heading':
+            return
+        column_id = tabela.identify_column(event.x)
+        if not column_id:
+            return
+        index = int(column_id.replace('#', '')) - 1
+        if 0 <= index < len(cabecalho):
+            show_filter_dialog(cabecalho[index])
+
     for col in cabecalho:
-        tabela.heading(col, text=col)
+        tabela.heading(col, text=col, command=lambda c=col: on_heading_click(c))
         tabela.column(col, width=150, anchor="center")
 
-    for linha in linhas:
-        tabela.insert("", "end", values=linha)
+    tabela.bind('<Button-3>', on_heading_right_click)
+
+    for row in rows:
+        tabela.insert("", "end", values=[row[col] for col in cabecalho])
+
+    filtros_label = tk.Label(janela, text="Filtros ativos: Nenhum", anchor="w")
+    filtros_label.pack(fill="x", padx=10, pady=(8, 0))
 
     barra_y = ttk.Scrollbar(janela, orient="vertical", command=tabela.yview)
     tabela.configure(yscrollcommand=barra_y.set)
