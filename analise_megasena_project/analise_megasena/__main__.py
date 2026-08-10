@@ -43,7 +43,74 @@ def selecionar_arquivo_para_processar():
     return None
 
 
-def processar_arquivo(caminho_arquivo):
+def escolher_concurso(caminho_arquivo):
+    """Mostra uma lista de concursos presentes no arquivo e retorna o concurso escolhido.
+    Retorna None para processar todos."""
+    concursos = []
+    try:
+        with open(caminho_arquivo, 'r', encoding='utf-8') as f:
+            for line in f:
+                if '-' not in line:
+                    continue
+                try:
+                    num = int(line.partition('-')[0].strip())
+                except ValueError:
+                    continue
+                if num not in concursos:
+                    concursos.append(num)
+    except Exception:
+        return None
+
+    if not concursos:
+        return None
+
+    # Tentar mostrar interface Tkinter com lista
+    try:
+        root = tk.Tk()
+        root.title("Escolha o concurso")
+        root.geometry("320x420")
+
+        lbl = tk.Label(root, text="Selecione o concurso a processar (ou feche para processar todos):")
+        lbl.pack(padx=8, pady=8)
+
+        lb = tk.Listbox(root, selectmode=tk.SINGLE)
+        # Mostrar em ordem decrescente (mais recente primeiro)
+        for c in sorted(concursos, reverse=True):
+            lb.insert("end", c)
+        lb.pack(fill="both", expand=True, padx=8, pady=8)
+
+        selected = {'value': None}
+
+        def on_ok():
+            sel = lb.curselection()
+            if sel:
+                selected['value'] = int(lb.get(sel))
+            root.destroy()
+
+        def on_cancel():
+            root.destroy()
+
+        btn_frame = tk.Frame(root)
+        tk.Button(btn_frame, text="OK", width=10, command=on_ok).pack(side="left", padx=5)
+        tk.Button(btn_frame, text="Cancelar", width=10, command=on_cancel).pack(side="left", padx=5)
+        btn_frame.pack(pady=8)
+
+        root.mainloop()
+        return selected['value']
+    except (tk.TclError, AttributeError):
+        # Fallback para terminal
+        print("Concursos disponíveis (mais recentes primeiro):")
+        print(", ".join(str(c) for c in sorted(concursos, reverse=True)))
+        resp = input("Digite o número do concurso a processar (ou deixe em branco para processar todos): ").strip()
+        if resp:
+            try:
+                return int(resp)
+            except ValueError:
+                return None
+        return None
+
+
+def processar_arquivo(caminho_arquivo, concurso_alvo=None):
     # Função para processar o arquivo selecionado
     try:
         with open(caminho_arquivo, 'r') as arquivo:
@@ -71,6 +138,9 @@ def processar_arquivo(caminho_arquivo):
                     # Se o dígito i não estiver presente nas dezenas, incrementa o contador de aparições consecutivas    
                     else:
                         digitos_mega['d' + str(i)]['a.atual'] += 1
+                # Se foi escolhido um concurso alvo, interrompe após processá-lo
+                if concurso_alvo is not None and concursos == concurso_alvo:
+                    break
         # Atualiza os valores finais após processar todas as linhas do arquivo
         for i in range(1, 61):
             if digitos_mega['d' + str(i)]['a.atual'] != 0:
@@ -202,7 +272,7 @@ def main():
     caminho_arquivo = selecionar_arquivo_para_processar()
 
     if caminho_arquivo:
-        processar_arquivo(caminho_arquivo)
+        processar_arquivo(caminho_arquivo, concurso_alvo=escolher_concurso(caminho_arquivo))
         gravar_json(digitos_mega)
 
     try:
