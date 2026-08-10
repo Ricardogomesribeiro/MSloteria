@@ -1,0 +1,6 @@
+pytest
+setuptools
+wheel
+tabulate
+flet
+# TODO: update the necessary requirements to develop this package

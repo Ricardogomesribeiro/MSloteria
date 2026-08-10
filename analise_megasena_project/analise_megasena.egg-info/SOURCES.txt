@@ -1,0 +1,9 @@
+dev-requirements.txt
+pyproject.toml
+analise_megasena/__init__.py
+analise_megasena/__main__.py
+analise_megasena.egg-info/PKG-INFO
+analise_megasena.egg-info/SOURCES.txt
+analise_megasena.egg-info/dependency_links.txt
+analise_megasena.egg-info/requires.txt
+analise_megasena.egg-info/top_level.txt
