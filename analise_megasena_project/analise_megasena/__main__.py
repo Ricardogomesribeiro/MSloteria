@@ -8,13 +8,21 @@ from tabulate import tabulate
 import sys
 import os
 global digitos_mega
+global tabela_atrasos
+global dezenas_concursos
 
 def inicioVariaveis():
     # Cria um dicionário para armazenar informações sobre os dígitos da Mega-Sena
     global digitos_mega
+    global tabela_atrasos
+       
     digitos_mega = {}
+    tabela_atrasos = {}
+   
     for i in range(1, 61):
         digitos_mega['d' + str(i)] = { 'vezes': 0, 'a.atual': 0, 'a.medio': 0, 'a.max': 0, 'a.acumulado': 0, 'contador a.': 0}
+        tabela_atrasos['d' + str(i)] = { 'concurso': [], 'atraso': []}
+
     return digitos_mega
 
 
@@ -46,7 +54,9 @@ def selecionar_arquivo_para_processar():
 def escolher_concurso(caminho_arquivo):
     """Mostra uma lista de concursos presentes no arquivo e retorna o concurso escolhido.
     Retorna None para processar todos."""
+    global dezenas_concursos
     concursos = []
+    dezenas_concursos = {}
     try:
         with open(caminho_arquivo, 'r', encoding='utf-8') as f:
             for line in f:
@@ -58,6 +68,14 @@ def escolher_concurso(caminho_arquivo):
                     continue
                 if num not in concursos:
                     concursos.append(num)
+                    dezenas_concursos['c_' + str(num)] = {
+                            "dez_1": {'dezena': 0, 'a.atual': 0,'a.max': 0,'a.medio': 0,'relacao.atraso': 0},
+                            "dez_2": {'dezena': 0, 'a.atual': 0,'a.max': 0,'a.medio': 0,'relacao.atraso': 0},
+                            "dez_3": {'dezena': 0, 'a.atual': 0,'a.max': 0,'a.medio': 0,'relacao.atraso': 0},
+                            "dez_4": {'dezena': 0, 'a.atual': 0,'a.max': 0,'a.medio': 0,'relacao.atraso': 0},
+                            "dez_5": {'dezena': 0, 'a.atual': 0,'a.max': 0,'a.medio': 0,'relacao.atraso': 0},
+                            "dez_6": {'dezena': 0, 'a.atual': 0,'a.max': 0,'a.medio': 0,'relacao.atraso': 0}
+                        }
     except Exception:
         return None
 
@@ -111,6 +129,7 @@ def escolher_concurso(caminho_arquivo):
 
 
 def processar_arquivo(caminho_arquivo, concurso_alvo=None):
+    
     # Função para processar o arquivo selecionado
     try:
         with open(caminho_arquivo, 'r') as arquivo:
@@ -118,13 +137,25 @@ def processar_arquivo(caminho_arquivo, concurso_alvo=None):
             for line in reversed(list(arquivo)):
                 if '-' not in line:
                     continue
-                # Processa a linha do arquivo  
+                # Processa a linha do arquivo
+                identificador = 1  
                 concursos = int(line.partition('-')[0].strip())
                 linha_dezenas = line.partition('-')[2].strip()
                 dezenas = [int(d) for d in linha_dezenas.split(",")]
                 # Atualiza os contadores para cada dígito de 1 a 60
                 for i in range(1, 61):
                     if i in dezenas:
+                        # Atualiza os dados para a lista das dezenas passadas
+                        dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['dezena'] = i
+                        dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['a.atual'] = digitos_mega['d' + str(i)]['a.atual']
+                        dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['a.max'] = digitos_mega['d' + str(i)]['a.max']
+                        dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['a.medio'] = digitos_mega['d' + str(i)]['a.medio']
+                        if digitos_mega['d' + str(i)]['a.atual'] != 0:
+                            dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['relacao.atraso'] = round(digitos_mega['d' + str(i)]['a.max'] / digitos_mega['d' + str(i)]['a.atual'], 4)
+                        else:
+                            dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['relacao.atraso'] = 0
+                        identificador += 1
+                            
                         # Atualiza os contadores para atraso máximo
                         digitos_mega['d' + str(i)]['vezes'] += 1
                         if digitos_mega['d' + str(i)]['a.max'] < digitos_mega['d' + str(i)]['a.atual']:
@@ -133,7 +164,9 @@ def processar_arquivo(caminho_arquivo, concurso_alvo=None):
                         if digitos_mega['d' + str(i)]['a.atual'] != 0:
                             digitos_mega['d' + str(i)]['a.acumulado'] += digitos_mega['d' + str(i)]['a.atual']
                             digitos_mega['d' + str(i)]['contador a.'] += 1
-                            digitos_mega['d' + str(i)]['a.medio'] = digitos_mega['d' + str(i)]['a.acumulado'] / digitos_mega['d' + str(i)]['contador a.']
+                            digitos_mega['d' + str(i)]['a.medio'] = round(digitos_mega['d' + str(i)]['a.acumulado'] / digitos_mega['d' + str(i)]['contador a.'], 4)
+                        tabela_atrasos['d' + str(i)]['concurso'].append(concursos)
+                        tabela_atrasos['d' + str(i)]['atraso'].append(digitos_mega['d' + str(i)]['a.atual'])
                         digitos_mega['d' + str(i)]['a.atual'] = 0
                     # Se o dígito i não estiver presente nas dezenas, incrementa o contador de aparições consecutivas    
                     else:
@@ -149,10 +182,13 @@ def processar_arquivo(caminho_arquivo, concurso_alvo=None):
                 digitos_mega['d' + str(i)]['a.acumulado'] += digitos_mega['d' + str(i)]['a.atual']
                 digitos_mega['d' + str(i)]['contador a.'] += 1
                 digitos_mega['d' + str(i)]['a.medio'] = digitos_mega['d' + str(i)]['a.acumulado'] / digitos_mega['d' + str(i)]['contador a.']
+                tabela_atrasos['d' + str(i)]['concurso'].append(concursos)
+                tabela_atrasos['d' + str(i)]['atraso'].append(digitos_mega['d' + str(i)]['a.atual'])
       
         arquivo.close()
         #print(list(digitos_mega.items()))
-           
+        #print(list(tabela_atrasos.items()))
+        #print(list(dezenas_concursos.items()))  
     except Exception as e:
         print(f"Erro ao abrir o arquivo: {e}")
 
@@ -179,6 +215,31 @@ def gravar_json(digitos_mega):
             #print(tabulate(linhas, headers=cabecalho, tablefmt='grid'))
         
             arquivo.close()
+
+    except Exception as e:
+        print(f"Erro ao gravar o arquivo JSON: {e}")
+
+    try:
+        # Função para gravar os dados de atrasos em um arquivo JSON
+        with open('tabela_atrasos.json', 'w', encoding='utf-8') as arquivo_atrasos:
+            json.dump(tabela_atrasos, arquivo_atrasos, ensure_ascii=False, indent=4)
+
+            # Dados para exibir em tabela
+            cabecalho_atrasos = ['Dígito', 'Concursos', 'Atrasos']
+            linhas_atrasos = []
+
+            for chave, valores in tabela_atrasos.items():
+                linhas_atrasos.append([
+                    chave,
+                    valores['concurso'],
+                    valores['atraso']
+                ])  
+
+            arquivo_atrasos.close()
+
+            # Mostrar a tabela na tela
+            #print(tabulate(linhas_atrasos, headers=cabecalho_atrasos , tablefmt='grid'))
+
     except Exception as e:
         print(f"Erro ao gravar o arquivo JSON: {e}")
 
@@ -225,7 +286,73 @@ def exibirTabelaDoArquivo(digitos_mega):
     except Exception as e:
             print(f"Erro ao abrir o arquivo: {e}")
 
-       
+def exibirTabelaEstatisticasDezenasConcursos( ):
+   
+    # Função para exibir os dados em uma tabela formatada
+    cabecalho = ['concurso','dez1','atual 1','max 1','medio 1','relacao 1',
+                            'dez2','atual 2','max 2','medio 2','relacao 2',
+                            'dez3','atual 3','max 3','medio 3','relacao 3',
+                            'dez4','atual 4','max 4','medio 4','relacao 4',
+                            'dez5','atual 5','max 5','medio 5','relacao 5',
+                            'dez6','atual 6','max 6','medio 6','relacao 6']
+    linhas = []
+    
+    for chave, valores in dezenas_concursos.items():
+        linhas.append([
+        chave,
+        valores['dez_1']['dezena'],
+        valores['dez_1']['a.atual'],
+        valores['dez_1']['a.max'],
+        valores['dez_1']['a.medio'],
+        valores['dez_1']['relacao.atraso'],
+        valores['dez_2']['dezena'],
+        valores['dez_2']['a.atual'],
+        valores['dez_2']['a.max'],
+        valores['dez_2']['a.medio'],
+        valores['dez_2']['relacao.atraso'],
+        valores['dez_3']['dezena'],
+        valores['dez_3']['a.atual'],
+        valores['dez_3']['a.max'],
+        valores['dez_3']['a.medio'],
+        valores['dez_3']['relacao.atraso'],
+        valores['dez_4']['dezena'],
+        valores['dez_4']['a.atual'],
+        valores['dez_4']['a.max'],
+        valores['dez_4']['a.medio'],
+        valores['dez_4']['relacao.atraso'],
+        valores['dez_5']['dezena'],
+        valores['dez_5']['a.atual'],
+        valores['dez_5']['a.max'],
+        valores['dez_5']['a.medio'],
+        valores['dez_5']['relacao.atraso'],
+        valores['dez_6']['dezena'],
+        valores['dez_6']['a.atual'],
+        valores['dez_6']['a.max'],
+        valores['dez_6']['a.medio'],
+        valores['dez_6']['relacao.atraso'],
+        ])
+    # Criar a janela principal
+    janela = tk.Tk()
+    janela.title("Estatísticas das Dezenas dos Concursos")
+    janela.geometry("960x620")
+
+    # Criar a tabela (Treeview)
+    tabela = ttk.Treeview(janela, columns=cabecalho, show="headings")
+
+    # Configurar o cabeçalho
+    for col in cabecalho:
+        tabela.heading(col, text=col)
+        tabela.column(col, width=60, anchor="center")
+
+    # Inserir os dados na tabela
+    for linha in linhas:
+        tabela.insert("", "end", values=linha)
+
+    # Posicionar a tabela na janela
+    tabela.pack(fill="both", expand=True, padx=10, pady=10)
+    janela.mainloop()    
+    
+   
 def exibirTabelaTkinter(digitos_mega):
     try:
         with open('digitos_mega.json', 'r', encoding='utf-8') as arquivo:
@@ -413,6 +540,45 @@ def exibirTabelaTkinter(digitos_mega):
     barra_y.pack(side="right", fill="y")
     janela.mainloop()
 
+def exibirTabelaTkinterAtrasos(tabela_atrasos):
+    try:
+        with open('tabela_atrasos.json', 'r', encoding='utf-8') as arquivo:
+            dados = json.load(arquivo)
+    except Exception as e:
+        print(f"Erro ao abrir o arquivo: {e}")
+        dados = {}
+
+    rows = []
+    for chave, valores in dados.items():
+        rows.append({
+            'Dígito': chave,
+            'Concursos': ', '.join(map(str, valores.get('concurso', []))),
+            'Atrasos': ', '.join(map(str, valores.get('atraso', []))),
+        })
+
+    janela = tk.Tk()
+    janela.title("Tabela de Atrasos")
+    janela.geometry("960x620")
+
+    cabecalho = ['Dígito', 'Concursos', 'Atrasos']
+    tabela = ttk.Treeview(janela, columns=cabecalho, show="headings", height=25)
+
+    for col in cabecalho:
+        tabela.heading(col, text=col)
+        tabela.column(col, width=300, anchor="center")
+
+    for row in rows:
+        tabela.insert("", "end", values=[row[col] for col in cabecalho])
+
+    barra_y = ttk.Scrollbar(janela, orient="vertical", command=tabela.yview)
+    tabela.configure(yscrollcommand=barra_y.set)
+
+    tabela.pack(side="left", fill="both", expand=True)
+    barra_y.pack(side="right", fill="y")
+    janela.mainloop()
+
+
+
 def main():
     global digitos_mega
 
@@ -438,7 +604,13 @@ def main():
     #exibirTabelaDoArquivo(digitos_mega)
     
     # Exibir a tabela usando Tkinter do arquivo JSON
-    exibirTabelaTkinter(digitos_mega)
+    #exibirTabelaTkinter(digitos_mega)
+
+    # Exibir a tabela de atrasos usando Tkinter do arquivo JSON
+    #exibirTabelaTkinterAtrasos(tabela_atrasos)
+
+    # Exibir a tabela de estatísticas das dezenas dos concursos usando Tkinter
+    exibirTabelaEstatisticasDezenasConcursos()
 
 
 if __name__ == "__main__":
