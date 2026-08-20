@@ -20,8 +20,8 @@ def inicioVariaveis():
     tabela_atrasos = {}
    
     for i in range(1, 61):
-        digitos_mega['d' + str(i)] = { 'vezes': 0, 'a.atual': 0, 'a.medio': 0, 'a.max': 0, 'a.acumulado': 0, 'contador a.': 0}
-        tabela_atrasos['d' + str(i)] = { 'concurso': [], 'atraso': []}
+        digitos_mega[str(i)] = { 'vezes': 0, 'a.atual': 0, 'a.medio': 0, 'a.max': 0, 'a.acumulado': 0, 'contador a.': 0}
+        tabela_atrasos[str(i)] = { 'concurso': [], 'atraso': []}
 
     return digitos_mega
 
@@ -68,7 +68,7 @@ def escolher_concurso(caminho_arquivo):
                     continue
                 if num not in concursos:
                     concursos.append(num)
-                    dezenas_concursos['c_' + str(num)] = {
+                    dezenas_concursos[str(num)] = {
                             "dez_1": {'dezena': 0, 'a.atual': 0,'a.max': 0,'a.medio': 0,'relacao.atraso': 0},
                             "dez_2": {'dezena': 0, 'a.atual': 0,'a.max': 0,'a.medio': 0,'relacao.atraso': 0},
                             "dez_3": {'dezena': 0, 'a.atual': 0,'a.max': 0,'a.medio': 0,'relacao.atraso': 0},
@@ -146,44 +146,44 @@ def processar_arquivo(caminho_arquivo, concurso_alvo=None):
                 for i in range(1, 61):
                     if i in dezenas:
                         # Atualiza os dados para a lista das dezenas passadas
-                        dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['dezena'] = i
-                        dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['a.atual'] = digitos_mega['d' + str(i)]['a.atual']
-                        dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['a.max'] = digitos_mega['d' + str(i)]['a.max']
-                        dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['a.medio'] = digitos_mega['d' + str(i)]['a.medio']
-                        if digitos_mega['d' + str(i)]['a.atual'] != 0:
-                            dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['relacao.atraso'] = round(digitos_mega['d' + str(i)]['a.max'] / digitos_mega['d' + str(i)]['a.atual'], 4)
+                        dezenas_concursos[str(concursos)]["dez_" + str(identificador)]['dezena'] = i
+                        dezenas_concursos[str(concursos)]["dez_" + str(identificador)]['a.atual'] = digitos_mega[str(i)]['a.atual']
+                        dezenas_concursos[str(concursos)]["dez_" + str(identificador)]['a.max'] = digitos_mega[str(i)]['a.max']
+                        dezenas_concursos[str(concursos)]["dez_" + str(identificador)]['a.medio'] = digitos_mega[str(i)]['a.medio']
+                        if digitos_mega[str(i)]['a.atual'] != 0:
+                            dezenas_concursos[str(concursos)]["dez_" + str(identificador)]['relacao.atraso'] = round(digitos_mega[str(i)]['a.max'] / digitos_mega[str(i)]['a.atual'], 3)
                         else:
-                            dezenas_concursos['c_' + str(concursos)]["dez_" + str(identificador)]['relacao.atraso'] = 0
+                            dezenas_concursos[str(concursos)]["dez_" + str(identificador)]['relacao.atraso'] = 0
                         identificador += 1
                             
                         # Atualiza os contadores para atraso máximo
-                        digitos_mega['d' + str(i)]['vezes'] += 1
-                        if digitos_mega['d' + str(i)]['a.max'] < digitos_mega['d' + str(i)]['a.atual']:
-                            digitos_mega['d' + str(i)]['a.max'] = digitos_mega['d' + str(i)]['a.atual']
+                        digitos_mega[str(i)]['vezes'] += 1
+                        if digitos_mega[str(i)]['a.max'] < digitos_mega[str(i)]['a.atual']:
+                            digitos_mega[str(i)]['a.max'] = digitos_mega[str(i)]['a.atual']
                         # Atualiza a média acumulada e o contador de aparições
-                        if digitos_mega['d' + str(i)]['a.atual'] != 0:
-                            digitos_mega['d' + str(i)]['a.acumulado'] += digitos_mega['d' + str(i)]['a.atual']
-                            digitos_mega['d' + str(i)]['contador a.'] += 1
-                            digitos_mega['d' + str(i)]['a.medio'] = round(digitos_mega['d' + str(i)]['a.acumulado'] / digitos_mega['d' + str(i)]['contador a.'], 4)
-                        tabela_atrasos['d' + str(i)]['concurso'].append(concursos)
-                        tabela_atrasos['d' + str(i)]['atraso'].append(digitos_mega['d' + str(i)]['a.atual'])
-                        digitos_mega['d' + str(i)]['a.atual'] = 0
+                        if digitos_mega[str(i)]['a.atual'] != 0:
+                            digitos_mega[str(i)]['a.acumulado'] += digitos_mega[str(i)]['a.atual']
+                            digitos_mega[str(i)]['contador a.'] += 1
+                            digitos_mega[str(i)]['a.medio'] = round(digitos_mega[str(i)]['a.acumulado'] / digitos_mega[str(i)]['contador a.'], 3)
+                        tabela_atrasos[str(i)]['concurso'].append(concursos)
+                        tabela_atrasos[str(i)]['atraso'].append(digitos_mega[str(i)]['a.atual'])
+                        digitos_mega[str(i)]['a.atual'] = 0
                     # Se o dígito i não estiver presente nas dezenas, incrementa o contador de aparições consecutivas    
                     else:
-                        digitos_mega['d' + str(i)]['a.atual'] += 1
+                        digitos_mega[str(i)]['a.atual'] += 1
                 # Se foi escolhido um concurso alvo, interrompe após processá-lo
                 if concurso_alvo is not None and concursos == concurso_alvo:
                     break
         # Atualiza os valores finais após processar todas as linhas do arquivo
         for i in range(1, 61):
-            if digitos_mega['d' + str(i)]['a.atual'] != 0:
-                if digitos_mega['d' + str(i)]['a.max'] < digitos_mega['d' + str(i)]['a.atual']:
-                    digitos_mega['d' + str(i)]['a.max'] = digitos_mega['d' + str(i)]['a.atual']
-                digitos_mega['d' + str(i)]['a.acumulado'] += digitos_mega['d' + str(i)]['a.atual']
-                digitos_mega['d' + str(i)]['contador a.'] += 1
-                digitos_mega['d' + str(i)]['a.medio'] = digitos_mega['d' + str(i)]['a.acumulado'] / digitos_mega['d' + str(i)]['contador a.']
-                tabela_atrasos['d' + str(i)]['concurso'].append(concursos)
-                tabela_atrasos['d' + str(i)]['atraso'].append(digitos_mega['d' + str(i)]['a.atual'])
+            if digitos_mega[str(i)]['a.atual'] != 0:
+                if digitos_mega[str(i)]['a.max'] < digitos_mega[str(i)]['a.atual']:
+                    digitos_mega[str(i)]['a.max'] = digitos_mega[str(i)]['a.atual']
+                digitos_mega[str(i)]['a.acumulado'] += digitos_mega[str(i)]['a.atual']
+                digitos_mega[str(i)]['contador a.'] += 1
+                digitos_mega[str(i)]['a.medio'] = round(digitos_mega[str(i)]['a.acumulado'] / digitos_mega[str(i)]['contador a.'], 3)
+                tabela_atrasos[str(i)]['concurso'].append(concursos)
+                tabela_atrasos[str(i)]['atraso'].append(digitos_mega[str(i)]['a.atual'])
       
         arquivo.close()
         #print(list(digitos_mega.items()))
@@ -289,12 +289,12 @@ def exibirTabelaDoArquivo(digitos_mega):
 def exibirTabelaEstatisticasDezenasConcursos( ):
    
     # Função para exibir os dados em uma tabela formatada
-    cabecalho = ['concurso','dez1','atual 1','max 1','medio 1','relacao 1',
-                            'dez2','atual 2','max 2','medio 2','relacao 2',
-                            'dez3','atual 3','max 3','medio 3','relacao 3',
-                            'dez4','atual 4','max 4','medio 4','relacao 4',
-                            'dez5','atual 5','max 5','medio 5','relacao 5',
-                            'dez6','atual 6','max 6','medio 6','relacao 6']
+    cabecalho = ['conc','dez1','at 1','max 1','med 1','rel 1',
+                        'dez2','at 2','max 2','med 2','rel 2',
+                        'dez3','at 3','max 3','med 3','rel 3',
+                        'dez4','at 4','max 4','med 4','rel 4',
+                        'dez5','at 5','max 5','med 5','rel 5',
+                        'dez6','at 6','max 6','med 6','rel 6']
     linhas = []
     
     for chave, valores in dezenas_concursos.items():
@@ -331,22 +331,69 @@ def exibirTabelaEstatisticasDezenasConcursos( ):
         valores['dez_6']['a.medio'],
         valores['dez_6']['relacao.atraso'],
         ])
-    # Criar a janela principal
+    # ============ CONFIGURAÇÃO DE ESTILO ============
     janela = tk.Tk()
     janela.title("Estatísticas das Dezenas dos Concursos")
-    janela.geometry("960x620")
+    janela.geometry("1100x620")
+    
+    style = ttk.Style()
+    style.theme_use("clam")  # temas: 'clam', 'alt', 'default', 'classic'
+    
+    # Estilo do cabeçalho
+    style.configure("Treeview.Heading",
+                    background="#2c3e50",
+                    foreground="white",
+                    font=("Arial", 9, "bold"))
+    
+    # Estilo das células (fonte e rowheight ajudam na "aparência de grade")
+    style.configure("Treeview",
+                    background="#ecf0f1",
+                    foreground="#2c3e50",
+                    fieldbackground="#ecf0f1",
+                    font=("Consolas", 9),
+                    rowheight=25)
+   
+     # Cor da seleção
+    style.map("Treeview", background=[("selected", "#3498db")])
 
-    # Criar a tabela (Treeview)
-    tabela = ttk.Treeview(janela, columns=cabecalho, show="headings")
+    # ============ CRIAR TABELA COM SCROLLBAR ============
+    frame = tk.Frame(janela)
+    frame.pack(fill="both", expand=True, padx=10, pady=10)
+    
+    # Scrollbars
+    scroll_y = ttk.Scrollbar(frame, orient="vertical")
+    scroll_x = ttk.Scrollbar(frame, orient="horizontal")
+    
+    tabela = ttk.Treeview(frame, columns=cabecalho, show="headings",
+                          yscrollcommand=scroll_y.set,
+                          xscrollcommand=scroll_x.set)
+    
+    scroll_y.config(command=tabela.yview)
+    scroll_x.config(command=tabela.xview)
+    
+    scroll_y.pack(side="right", fill="y")
+    scroll_x.pack(side="bottom", fill="x")
+    tabela.pack(side="left", fill="both", expand=True)
 
-    # Configurar o cabeçalho
+    # ============ CONFIGURAR CABEÇALHO ============
     for col in cabecalho:
-        tabela.heading(col, text=col)
-        tabela.column(col, width=60, anchor="center")
+        tabela.heading(col, text=col.upper())
+        tabela.column(col, width=50, anchor="center", minwidth=40)
 
-    # Inserir os dados na tabela
-    for linha in linhas:
-        tabela.insert("", "end", values=linha)
+    # ============ INSERIR DADOS COM CORES ALTERNADAS (ZEBRADO) ============
+    for i, linha in enumerate(linhas):
+        # Define tag com base em alguma condição ou apenas zebrado
+        if i % 2 == 0:
+            tag = "par"
+        else:
+            tag = "impar"
+        
+        tabela.insert("", "end", values=linha, tags=(tag,))
+
+    # ============ CONFIGURAR TAGS DE CORES ============
+    tabela.tag_configure("par", background="#ffffff", foreground="#2c3e50")
+    tabela.tag_configure("impar", background="#dfe6e9", foreground="#2c3e50")
+    tabela.tag_configure("destaque", background="#e74c3c", foreground="white", font=("Arial", 9, "bold"))
 
     # Posicionar a tabela na janela
     tabela.pack(fill="both", expand=True, padx=10, pady=10)
@@ -373,10 +420,36 @@ def exibirTabelaTkinter(digitos_mega):
 
     janela = tk.Tk()
     janela.title("Dados da Mega")
-    janela.geometry("960x620")
+    janela.geometry("1100x620")
 
+    style = ttk.Style()
+    style.theme_use("clam")  # temas: 'clam', 'alt', 'default', 'classic'
+        
+    # Estilo do cabeçalho
+    style.configure("Treeview.Heading",
+                        background="#2c3e50",
+                        foreground="white",
+                        font=("Arial", 9, "bold"))
+        
+    # Estilo das células (fonte e rowheight ajudam na "aparência de grade")
+    style.configure("Treeview",
+                    background="#ecf0f1",
+                    foreground="#2c3e50",
+                    fieldbackground="#ecf0f1",
+                    font=("Consolas", 9),
+                    rowheight=25)
+       
+    # Cor da seleção
+    style.map("Treeview", background=[("selected", "#3498db")])
+
+    # ============ CRIAR TABELA ============
     cabecalho = ['Dígito', 'Vezes', 'A. Atual', 'A. Médio', 'A. Máx']
     tabela = ttk.Treeview(janela, columns=cabecalho, show="headings", height=25)
+
+    # ============ CONFIGURAR CABEÇALHO ============
+    for col in cabecalho:
+        tabela.heading(col, text=col.upper())
+        tabela.column(col, width=50, anchor="center", minwidth=40)
 
     filters = {col: {'min': None, 'max': None} for col in cabecalho}
 
@@ -439,11 +512,17 @@ def exibirTabelaTkinter(digitos_mega):
             return display_rows
 
     def atualizar_tabela():
+        i = 0
         tabela.delete(*tabela.get_children())
         for row in sort_rows(get_display_rows()):
-            tabela.insert("", "end", values=[row[col] for col in cabecalho])
+            if i % 2 == 0:
+                tag = "par"
+            else:
+                tag = "impar"
+            i += 1    
+            tabela.insert("", "end", values=[row[col] for col in cabecalho], tags=(tag,))
         atualizar_filtros_label()
-
+    
     def on_heading_click(col):
         nonlocal sort_column, sort_ascending
         if sort_column == col:
@@ -528,8 +607,18 @@ def exibirTabelaTkinter(digitos_mega):
     tabela.bind('<Button-3>', on_heading_right_click)
 
     for row in rows:
-        tabela.insert("", "end", values=[row[col] for col in cabecalho])
+        if rows.index(row) % 2 == 0:
+            tag = "par"
+        else:
+            tag = "impar"
 
+        tabela.insert("", "end", values=[row[col] for col in cabecalho], tags=(tag,))
+        
+    # ============ CONFIGURAR TAGS DE CORES ============
+    tabela.tag_configure("par", background="#ffffff", foreground="#2c3e50")
+    tabela.tag_configure("impar", background="#dfe6e9", foreground="#2c3e50")
+    tabela.tag_configure("destaque", background="#e74c3c", foreground="white", font=("Arial", 9, "bold"))
+           
     filtros_label = tk.Label(janela, text="Filtros ativos: Nenhum", anchor="w")
     filtros_label.pack(fill="x", padx=10, pady=(8, 0))
 
@@ -604,13 +693,13 @@ def main():
     #exibirTabelaDoArquivo(digitos_mega)
     
     # Exibir a tabela usando Tkinter do arquivo JSON
-    #exibirTabelaTkinter(digitos_mega)
+    exibirTabelaTkinter(digitos_mega)
 
     # Exibir a tabela de atrasos usando Tkinter do arquivo JSON
     #exibirTabelaTkinterAtrasos(tabela_atrasos)
 
     # Exibir a tabela de estatísticas das dezenas dos concursos usando Tkinter
-    exibirTabelaEstatisticasDezenasConcursos()
+    #exibirTabelaEstatisticasDezenasConcursos()
 
 
 if __name__ == "__main__":
