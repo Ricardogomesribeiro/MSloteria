@@ -5,7 +5,7 @@ import tkinter as tk
 import json
 from tabulate import tabulate
 
-import sys
+#import sys
 import os
 global digitos_mega
 global tabela_atrasos
@@ -535,7 +535,7 @@ def exibirTabelaTkinter(digitos_mega):
     def show_filter_dialog(col):
         dialog = tk.Toplevel(janela)
         dialog.title(f"Filtrar coluna: {col}")
-        dialog.geometry("320x180")
+        dialog.geometry("320x200")
         dialog.resizable(False, False)
 
         current = filters[col]
@@ -666,6 +666,15 @@ def exibirTabelaTkinterAtrasos(tabela_atrasos):
     barra_y.pack(side="right", fill="y")
     janela.mainloop()
 
+def tabelaAtrasosPandas(tabela_atrasos):
+    import pandas as pd
+
+    # Converte o dicionário em um DataFrame do Pandas
+    df = pd.DataFrame.from_dict(tabela_atrasos, orient='index')
+
+    df.to_excel('tabela_atrasos.xlsx', index_label='Dígito')
+    # Exibe a tabela no terminal
+    #print(df)
 
 
 def main():
@@ -693,10 +702,11 @@ def main():
     #exibirTabelaDoArquivo(digitos_mega)
     
     # Exibir a tabela usando Tkinter do arquivo JSON
-    exibirTabelaTkinter(digitos_mega)
+    #exibirTabelaTkinter(digitos_mega)
 
     # Exibir a tabela de atrasos usando Tkinter do arquivo JSON
     #exibirTabelaTkinterAtrasos(tabela_atrasos)
+    tabelaAtrasosPandas(tabela_atrasos)
 
     # Exibir a tabela de estatísticas das dezenas dos concursos usando Tkinter
     #exibirTabelaEstatisticasDezenasConcursos()
