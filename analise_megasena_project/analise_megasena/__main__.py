@@ -129,7 +129,6 @@ def escolher_concurso(caminho_arquivo):
 
 
 def processar_arquivo(caminho_arquivo, concurso_alvo=None):
-    
     # Função para processar o arquivo selecionado
     try:
         with open(caminho_arquivo, 'r') as arquivo:
@@ -186,18 +185,17 @@ def processar_arquivo(caminho_arquivo, concurso_alvo=None):
                 tabela_atrasos[str(i)]['atraso'].append(digitos_mega[str(i)]['a.atual'])
       
         arquivo.close()
-        #print(list(digitos_mega.items()))
-        #print(list(tabela_atrasos.items()))
-        #print(list(dezenas_concursos.items()))  
     except Exception as e:
         print(f"Erro ao abrir o arquivo: {e}")
 
 def gravar_json(digitos_mega):
+    import json
+    import pandas as pd
     try:
         # Função para gravar os dados em um arquivo JSON
         with open('digitos_mega.json', 'w', encoding='utf-8') as arquivo:
             json.dump(digitos_mega, arquivo, ensure_ascii=False, indent=4)
-        
+        '''
         # 2. Preparar os dados para exibir em tabela
             cabecalho = ['Dígito', 'Vezes', 'A. Atual', 'A. Médio', 'A. Máx']
             linhas = []
@@ -213,124 +211,69 @@ def gravar_json(digitos_mega):
         
             # Mostrar a tabela na tela
             #print(tabulate(linhas, headers=cabecalho, tablefmt='grid'))
-        
-            arquivo.close()
-
-    except Exception as e:
-        print(f"Erro ao gravar o arquivo JSON: {e}")
-
-    try:
-        # Função para gravar os dados de atrasos em um arquivo JSON
-        with open('tabela_atrasos.json', 'w', encoding='utf-8') as arquivo_atrasos:
-            json.dump(tabela_atrasos, arquivo_atrasos, ensure_ascii=False, indent=4)
-
-            # Dados para exibir em tabela
-            cabecalho_atrasos = ['Dígito', 'Concursos', 'Atrasos']
-            linhas_atrasos = []
-
-            for chave, valores in tabela_atrasos.items():
-                linhas_atrasos.append([
-                    chave,
-                    valores['concurso'],
-                    valores['atraso']
-                ])  
-
-            arquivo_atrasos.close()
-
-            # Mostrar a tabela na tela
-            #print(tabulate(linhas_atrasos, headers=cabecalho_atrasos , tablefmt='grid'))
-
-    except Exception as e:
-        print(f"Erro ao gravar o arquivo JSON: {e}")
-
-def exibirTabelaDoArquivo(digitos_mega):
-    try:
-        # Abre o arquivo JSON em modo de leitura
-        with open('digitos_mega.json', 'r', encoding='utf-8') as arquivo:
-            dados = json.load(arquivo)
+        '''  
+        # 3. Criar DataFrame e salvar em Excel
+        df_frequencia = pd.DataFrame(digitos_mega).T.reset_index()
         arquivo.close()
 
-        # Função para exibir os dados em uma tabela formatada
-        cabecalho = ['Dígito', 'Vezes', 'A. Atual', 'A. Médio', 'A. Máx']
-        linhas = []
-    
-        for chave, valores in dados.items():
-            linhas.append([
-            chave,
-            valores['vezes'],
-            valores['a.atual'],
-            valores['a.medio'],
-            valores['a.max'],
-            ])
-        # Criar a janela principal
-        janela = tk.Tk()
-        janela.title("Dados da Mega")
-        janela.geometry("500x300")
-
-        # Criar a tabela (Treeview)
-        tabela = ttk.Treeview(janela, columns=cabecalho, show="headings")
-
-        # Configurar o cabeçalho
-        for col in cabecalho:
-            tabela.heading(col, text=col)
-            tabela.column(col, width=80, anchor="center")
-
-        # Inserir os dados na tabela
-        for linha in linhas:
-            tabela.insert("", "end", values=linha)
-
-        # Posicionar a tabela na janela
-        tabela.pack(fill="both", expand=True, padx=10, pady=10)
-        janela.mainloop()    
-    
     except Exception as e:
-            print(f"Erro ao abrir o arquivo: {e}")
+        print(f"Erro ao gravar o arquivo JSON: {e}")
+
+    try:
+        dados = []
+        
+        for dezena_str in sorted(tabela_atrasos.keys(), key=int):
+            dezena = int(dezena_str)
+            concursos = tabela_atrasos[dezena_str]['concurso']
+            atrasos = tabela_atrasos[dezena_str]['atraso']
+            
+            for i, (concurso, atraso) in enumerate(zip(concursos, atrasos)):
+                if i == 0:
+                    dados.append({'dezena': dezena, 'concurso': concurso, 'atraso': atraso})
+                else:
+                    dados.append({'dezena': '', 'concurso': concurso, 'atraso': atraso})
+        
+        # Função para gravar os dados em um arquivo JSON
+        with open('tabela_atrasos.json', 'w', encoding='utf-8') as arquivo:
+            json.dump(dados, arquivo, ensure_ascii=False, indent=4)
+        arquivo.close()
+        # Criar DataFrame e salvar em Excel
+        df_atrasos = pd.DataFrame(dados)
+        with pd.ExcelWriter('probabilidade_mega.xlsx', engine='openpyxl') as writer:
+            df_frequencia.to_excel(writer, sheet_name='frequencia', index=False)
+            df_atrasos.to_excel(writer, sheet_name='atrasos', index=False)
+        
+    except Exception as e:
+        print(f"Erro ao gravar o arquivo JSON: {e}")
 
 def exibirTabelaEstatisticasDezenasConcursos( ):
-   
+    import pandas as pd
+
     # Função para exibir os dados em uma tabela formatada
-    cabecalho = ['conc','dez1','at 1','max 1','med 1','rel 1',
-                        'dez2','at 2','max 2','med 2','rel 2',
-                        'dez3','at 3','max 3','med 3','rel 3',
-                        'dez4','at 4','max 4','med 4','rel 4',
-                        'dez5','at 5','max 5','med 5','rel 5',
-                        'dez6','at 6','max 6','med 6','rel 6']
+    cabecalho = ['concurso','dezena','atraso atual','atraso máximo','média','relação']
+  
     linhas = []
     
     for chave, valores in dezenas_concursos.items():
-        linhas.append([
-        chave,
-        valores['dez_1']['dezena'],
-        valores['dez_1']['a.atual'],
-        valores['dez_1']['a.max'],
-        valores['dez_1']['a.medio'],
-        valores['dez_1']['relacao.atraso'],
-        valores['dez_2']['dezena'],
-        valores['dez_2']['a.atual'],
-        valores['dez_2']['a.max'],
-        valores['dez_2']['a.medio'],
-        valores['dez_2']['relacao.atraso'],
-        valores['dez_3']['dezena'],
-        valores['dez_3']['a.atual'],
-        valores['dez_3']['a.max'],
-        valores['dez_3']['a.medio'],
-        valores['dez_3']['relacao.atraso'],
-        valores['dez_4']['dezena'],
-        valores['dez_4']['a.atual'],
-        valores['dez_4']['a.max'],
-        valores['dez_4']['a.medio'],
-        valores['dez_4']['relacao.atraso'],
-        valores['dez_5']['dezena'],
-        valores['dez_5']['a.atual'],
-        valores['dez_5']['a.max'],
-        valores['dez_5']['a.medio'],
-        valores['dez_5']['relacao.atraso'],
-        valores['dez_6']['dezena'],
-        valores['dez_6']['a.atual'],
-        valores['dez_6']['a.max'],
-        valores['dez_6']['a.medio'],
-        valores['dez_6']['relacao.atraso'],
-        ])
+        # Para cada uma das 6 dezenas do concurso, cria uma linha separada
+        for i in range(1, 7):
+            dez_key = f'dez_{i}'
+            linhas.append([
+                chave,                          # concurso
+                valores[dez_key]['dezena'],     # dez
+                valores[dez_key]['a.atual'],    # at
+                valores[dez_key]['a.max'],      # max
+                valores[dez_key]['a.medio'],    # med
+                valores[dez_key]['relacao.atraso']  # rel
+            ])
+    
+    # Cria o DataFrame com as colunas no formato longo
+    df_concursos = pd.DataFrame(linhas, columns=['concurso', 'dezena', 'atraso atual', 'atraso máximo', 'média', 'relação'])
+    
+    # Salva no Excel
+    with pd.ExcelWriter('probabilidade_mega.xlsx', engine='openpyxl', mode='a') as writer:
+        df_concursos.to_excel(writer, sheet_name='concursos', index=False)
+        #df_concursos.to_excel(writer, sheet_name='concursos', index=False)
     # ============ CONFIGURAÇÃO DE ESTILO ============
     janela = tk.Tk()
     janela.title("Estatísticas das Dezenas dos Concursos")
@@ -404,6 +347,8 @@ def exibirTabelaTkinter(digitos_mega):
     try:
         with open('digitos_mega.json', 'r', encoding='utf-8') as arquivo:
             dados = json.load(arquivo)
+        arquivo.close()
+
     except Exception as e:
         print(f"Erro ao abrir o arquivo: {e}")
         dados = {}
@@ -629,54 +574,6 @@ def exibirTabelaTkinter(digitos_mega):
     barra_y.pack(side="right", fill="y")
     janela.mainloop()
 
-def exibirTabelaTkinterAtrasos(tabela_atrasos):
-    try:
-        with open('tabela_atrasos.json', 'r', encoding='utf-8') as arquivo:
-            dados = json.load(arquivo)
-    except Exception as e:
-        print(f"Erro ao abrir o arquivo: {e}")
-        dados = {}
-
-    rows = []
-    for chave, valores in dados.items():
-        rows.append({
-            'Dígito': chave,
-            'Concursos': ', '.join(map(str, valores.get('concurso', []))),
-            'Atrasos': ', '.join(map(str, valores.get('atraso', []))),
-        })
-
-    janela = tk.Tk()
-    janela.title("Tabela de Atrasos")
-    janela.geometry("960x620")
-
-    cabecalho = ['Dígito', 'Concursos', 'Atrasos']
-    tabela = ttk.Treeview(janela, columns=cabecalho, show="headings", height=25)
-
-    for col in cabecalho:
-        tabela.heading(col, text=col)
-        tabela.column(col, width=300, anchor="center")
-
-    for row in rows:
-        tabela.insert("", "end", values=[row[col] for col in cabecalho])
-
-    barra_y = ttk.Scrollbar(janela, orient="vertical", command=tabela.yview)
-    tabela.configure(yscrollcommand=barra_y.set)
-
-    tabela.pack(side="left", fill="both", expand=True)
-    barra_y.pack(side="right", fill="y")
-    janela.mainloop()
-
-def tabelaAtrasosPandas(tabela_atrasos):
-    import pandas as pd
-
-    # Converte o dicionário em um DataFrame do Pandas
-    df = pd.DataFrame.from_dict(tabela_atrasos, orient='index')
-
-    df.to_excel('tabela_atrasos.xlsx', index_label='Dígito')
-    # Exibe a tabela no terminal
-    #print(df)
-
-
 def main():
     global digitos_mega
 
@@ -687,30 +584,11 @@ def main():
         processar_arquivo(caminho_arquivo, concurso_alvo=escolher_concurso(caminho_arquivo))
         gravar_json(digitos_mega)
 
-    try:
-        with open('digitos_mega.json', 'r', encoding='utf-8') as arquivo:
-            digitos_mega = json.load(arquivo)
-    except FileNotFoundError:
-        digitos_mega = inicioVariaveis()
-        gravar_json(digitos_mega)
-    except Exception as e:
-        print(f"Erro ao carregar o arquivo JSON: {e}")
-        digitos_mega = inicioVariaveis()
-        gravar_json(digitos_mega)
-
-    # Exibir a tabela no terminal da memória (opcional)
-    #exibirTabelaDoArquivo(digitos_mega)
-    
     # Exibir a tabela usando Tkinter do arquivo JSON
-    #exibirTabelaTkinter(digitos_mega)
-
-    # Exibir a tabela de atrasos usando Tkinter do arquivo JSON
-    #exibirTabelaTkinterAtrasos(tabela_atrasos)
-    tabelaAtrasosPandas(tabela_atrasos)
-
+    exibirTabelaTkinter(digitos_mega)
+   
     # Exibir a tabela de estatísticas das dezenas dos concursos usando Tkinter
-    #exibirTabelaEstatisticasDezenasConcursos()
-
+    exibirTabelaEstatisticasDezenasConcursos()
 
 if __name__ == "__main__":
     main()
